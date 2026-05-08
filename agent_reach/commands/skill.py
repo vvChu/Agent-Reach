@@ -6,8 +6,20 @@ import argparse
 import importlib.resources
 import os
 import shutil
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Protocol
+
+
+class _ResourcePath(Protocol):
+    @property
+    def name(self) -> str: ...
+
+    def joinpath(self, path: str) -> "_ResourcePath": ...
+
+    def read_text(self, encoding: str = "utf-8") -> str: ...
+
+    def iterdir(self) -> Iterable["_ResourcePath"]: ...
 
 
 def _is_english_locale(value: str) -> bool:
@@ -15,7 +27,7 @@ def _is_english_locale(value: str) -> bool:
     return normalized.startswith("en") or normalized.startswith("english")
 
 
-def _skill_resource_name(environ: dict[str, str] | os._Environ[str]) -> str:
+def _skill_resource_name(environ: Mapping[str, str]) -> str:
     locale_candidates = (
         environ.get("AGENT_REACH_LANG", ""),
         environ.get("LC_ALL", ""),
@@ -27,7 +39,7 @@ def _skill_resource_name(environ: dict[str, str] | os._Environ[str]) -> str:
     return "SKILL.md"
 
 
-def _read_skill_markdown(skill_pkg: Any, environ: dict[str, str] | os._Environ[str]) -> str:
+def _read_skill_markdown(skill_pkg: _ResourcePath, environ: Mapping[str, str]) -> str:
     resource_name = _skill_resource_name(environ)
     try:
         return skill_pkg.joinpath(resource_name).read_text(encoding="utf-8")
@@ -38,7 +50,7 @@ def _read_skill_markdown(skill_pkg: Any, environ: dict[str, str] | os._Environ[s
 def _copy_skill_dir(
     target: str,
     *,
-    environ: dict[str, str] | os._Environ[str],
+    environ: Mapping[str, str],
 ) -> bool:
     """Copy the packaged skill directory to a target location."""
     try:
@@ -80,7 +92,7 @@ def _copy_skill_dir(
 def install_skill(
     *,
     expanduser=os.path.expanduser,
-    environ: dict[str, str] | os._Environ[str] | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> None:
     """Install Agent Reach as an agent skill."""
     env = environ or os.environ
@@ -122,7 +134,7 @@ def install_skill(
 def uninstall_skill(
     *,
     expanduser=os.path.expanduser,
-    environ: dict[str, str] | os._Environ[str] | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> None:
     """Remove Agent Reach from known agent skill directories."""
     env = environ or os.environ
