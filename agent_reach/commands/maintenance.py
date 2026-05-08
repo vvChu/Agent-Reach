@@ -10,6 +10,8 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+# Error-message fragments used to classify DNS failures across requests/urllib3
+# variants on different platforms.
 from agent_reach.config import Config
 from agent_reach.doctor import check_all, format_report
 

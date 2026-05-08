@@ -275,9 +275,7 @@ def _classify_github_response_error(resp):
     return _classify_github_response_error_impl(resp)
 
 
-def _github_get_with_retry(url, timeout=10, retries=3, sleeper=None):
-    if sleeper is None:
-        sleeper = time.sleep
+def _github_get_with_retry(url, timeout=10, retries=3, sleeper=time.sleep):
     return _github_get_with_retry_impl(url, timeout=timeout, retries=retries, sleeper=sleeper)
 
 
