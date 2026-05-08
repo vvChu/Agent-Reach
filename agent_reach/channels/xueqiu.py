@@ -28,6 +28,27 @@ _opener = urllib.request.build_opener(
 _cookies_initialized = False
 
 
+def _make_cookie(name: str, value: str, *, domain: str = ".xueqiu.com") -> http.cookiejar.Cookie:
+    return http.cookiejar.Cookie(
+        version=0,
+        name=name,
+        value=value,
+        port=None,
+        port_specified=False,
+        domain=domain,
+        domain_specified=True,
+        domain_initial_dot=domain.startswith("."),
+        path="/",
+        path_specified=True,
+        secure=True,
+        expires=None,
+        discard=True,
+        comment=None,
+        comment_url=None,
+        rest={},
+    )
+
+
 def _inject_cookie_string(cookie_str: str) -> None:
     """Parse a 'name=value; name2=value2' string and inject into the cookie jar."""
     for pair in cookie_str.split(";"):
@@ -35,24 +56,7 @@ def _inject_cookie_string(cookie_str: str) -> None:
         if "=" not in pair:
             continue
         name, _, value = pair.partition("=")
-        cookie = http.cookiejar.Cookie(
-            version=0,
-            name=name.strip(),
-            value=value.strip(),
-            port=None,
-            port_specified=False,
-            domain=".xueqiu.com",
-            domain_specified=True,
-            domain_initial_dot=True,
-            path="/",
-            path_specified=True,
-            secure=True,
-            expires=None,
-            discard=True,
-            comment=None,
-            comment_url=None,
-            rest={},
-        )
+        cookie = _make_cookie(name.strip(), value.strip())
         _cookie_jar.set_cookie(cookie)
 
 
@@ -82,13 +86,22 @@ def _load_cookies_from_browser() -> bool:
         try:
             import rookiepy
             cookies = rookiepy.chrome([".xueqiu.com"])
-            if not any(c.get("name") == "xq_a_token" for c in cookies):
+            if not any(isinstance(cookie, dict) and cookie.get("name") == "xq_a_token" for cookie in cookies):
                 return False
-            for c in cookies:
-                _cookie_jar.set(c["name"], c["value"], domain=c.get("domain", ".xueqiu.com"))
+            for cookie in cookies:
+                if not isinstance(cookie, dict):
+                    continue
+                name = cookie.get("name")
+                value = cookie.get("value")
+                if isinstance(name, str) and isinstance(value, str):
+                    domain = cookie.get("domain", ".xueqiu.com")
+                    if not isinstance(domain, str):
+                        domain = ".xueqiu.com"
+                    _cookie_jar.set_cookie(_make_cookie(name, value, domain=domain))
             return True
         except ImportError:
             import browser_cookie3
+
             cookies = list(browser_cookie3.chrome(domain_name=".xueqiu.com"))
             if not any(c.name == "xq_a_token" for c in cookies):
                 return False

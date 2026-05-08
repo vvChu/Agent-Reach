@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 """Tests for Agent Reach CLI."""
 
+import re
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 import requests
-from unittest.mock import patch
+
 import agent_reach.cli as cli
 from agent_reach.cli import main
 
@@ -41,6 +45,132 @@ class TestCLI:
         )
         assert auth_token == "token123"
         assert ct0 == "ct0abc"
+
+    def test_install_dry_run_stays_side_effect_free(self, capsys, monkeypatch, tmp_path):
+        monkeypatch.setenv("HOME", str(tmp_path))
+        calls = []
+
+        monkeypatch.setattr(cli, "_detect_environment", lambda: "local")
+        monkeypatch.setattr(
+            cli,
+            "_install_system_deps_dryrun",
+            lambda: calls.append("system-dryrun"),
+        )
+        monkeypatch.setattr(
+            cli,
+            "_install_system_deps",
+            lambda: pytest.fail("non-dry-run system installer should not run"),
+        )
+        monkeypatch.setattr(
+            cli,
+            "_install_system_deps_safe",
+            lambda: pytest.fail("safe installer should not run in dry-run"),
+        )
+        monkeypatch.setattr(
+            cli,
+            "_install_mcporter",
+            lambda: pytest.fail("mcporter installer should not run in dry-run"),
+        )
+        monkeypatch.setattr(
+            cli,
+            "_install_mcporter_safe",
+            lambda: pytest.fail("safe mcporter installer should not run in dry-run"),
+        )
+        monkeypatch.setattr(
+            cli,
+            "_install_skill",
+            lambda: pytest.fail("skill install should not run in dry-run"),
+        )
+
+        with patch(
+            "sys.argv",
+            ["agent-reach", "install", "--env=auto", "--dry-run", "--channels=twitter"],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert calls == ["system-dryrun"]
+        assert "DRY RUN — showing what would be done (no changes)" in captured.out
+        assert "[dry-run] Would install mcporter and configure Exa search" in captured.out
+        assert "[dry-run] Would install optional channels: twitter" in captured.out
+        assert "[dry-run] Would try to import cookies from Chrome/Firefox" in captured.out
+        assert "Dry run complete. No changes were made." in captured.out
+
+    def test_install_safe_uses_safe_helpers_and_runs_validation(self, capsys, monkeypatch, tmp_path):
+        monkeypatch.setenv("HOME", str(tmp_path))
+        calls = []
+        fake_results = {"github": {"status": "ok", "name": "GitHub", "message": "ready"}}
+
+        monkeypatch.setattr(
+            cli,
+            "_install_system_deps_safe",
+            lambda: calls.append("system-safe"),
+        )
+        monkeypatch.setattr(
+            cli,
+            "_install_mcporter_safe",
+            lambda: calls.append("mcporter-safe"),
+        )
+        monkeypatch.setattr(
+            cli,
+            "_install_system_deps",
+            lambda: pytest.fail("unsafe system installer should not run in safe mode"),
+        )
+        monkeypatch.setattr(
+            cli,
+            "_install_mcporter",
+            lambda: pytest.fail("unsafe mcporter installer should not run in safe mode"),
+        )
+        monkeypatch.setattr(cli, "_check_all", lambda _config: fake_results)
+        monkeypatch.setattr(cli, "_format_doctor_report", lambda results: f"formatted:{len(results)}")
+        monkeypatch.setattr(cli, "_install_skill", lambda: calls.append("skill"))
+
+        with patch("sys.argv", ["agent-reach", "install", "--safe"]):
+            main()
+
+        captured = capsys.readouterr()
+        assert calls == ["system-safe", "mcporter-safe", "skill"]
+        assert "SAFE MODE — skipping automatic system changes" in captured.out
+        assert "Testing channels..." in captured.out
+        assert "formatted:1" in captured.out
+        assert "✅ Installation complete! 1/1 channels active." in captured.out
+
+    def test_environment_detection_prefers_local_when_no_server_indicators(self, monkeypatch):
+        monkeypatch.delenv("SSH_CONNECTION", raising=False)
+        monkeypatch.delenv("SSH_CLIENT", raising=False)
+        monkeypatch.setenv("DISPLAY", ":0")
+        monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
+        monkeypatch.setattr("agent_reach.commands.install.os.path.exists", lambda _path: False)
+
+        class Result:
+            returncode = 1
+            stdout = "none"
+
+        monkeypatch.setattr("agent_reach.commands.install.subprocess.run", lambda *args, **kwargs: Result())
+
+        assert cli._detect_environment() == "local"
+
+    def test_environment_detection_detects_server_from_ssh(self, monkeypatch):
+        monkeypatch.setenv("SSH_CONNECTION", "1 2 3 4")
+        monkeypatch.delenv("DISPLAY", raising=False)
+        monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
+        monkeypatch.setattr("agent_reach.commands.install.os.path.exists", lambda _path: False)
+
+        class Result:
+            returncode = 1
+            stdout = "none"
+
+        monkeypatch.setattr("agent_reach.commands.install.subprocess.run", lambda *args, **kwargs: Result())
+
+        assert cli._detect_environment() == "server"
+
+    def test_version_consistency(self):
+        pyproject = Path("/home/runner/work/Agent-Reach/Agent-Reach/pyproject.toml").read_text(
+            encoding="utf-8"
+        )
+        match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
+        assert match is not None
+        assert match.group(1) == cli.__version__
 
 
 class TestCheckUpdateRetry:

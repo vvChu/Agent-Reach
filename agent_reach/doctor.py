@@ -4,9 +4,12 @@
 Each channel knows how to check itself. Doctor just collects the results.
 """
 
+import stat
+import sys
 from typing import Dict
-from agent_reach.config import Config
+
 from agent_reach.channels import get_all_channels
+from agent_reach.config import Config
 
 
 def check_all(config: Config) -> Dict[str, dict]:
@@ -29,7 +32,8 @@ def format_report(results: Dict[str, dict]) -> str:
     try:
         from rich.markup import escape
     except ImportError:
-        escape = lambda x: x
+        def escape(text: str) -> str:
+            return text
 
     lines = []
     lines.append("[bold cyan]Agent Reach 状态[/bold cyan]")
@@ -86,11 +90,6 @@ def format_report(results: Dict[str, dict]) -> str:
             f"还有 {len(names)} 个可选渠道可以解锁（{'、'.join(names)}），"
             "告诉你的 Agent「帮我装 XXX」即可"
         )
-
-    # Security check: config file permissions (Unix only)
-    import os
-    import stat
-    import sys
 
     config_path = Config.CONFIG_DIR / "config.yaml"
     if config_path.exists() and sys.platform != "win32":
