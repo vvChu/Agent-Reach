@@ -768,11 +768,10 @@ def _cmd_doctor():
 
     from agent_reach.config import Config
     from agent_reach.doctor import check_all, format_report
-    printer: Callable[..., None]
     try:
         from rich import print as rich_print
 
-        printer = rich_print
+        printer: Callable[..., None] = rich_print
     except ImportError:
         printer = print
     config = Config()

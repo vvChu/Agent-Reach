@@ -40,14 +40,17 @@ class TestSkillCommand(unittest.TestCase):
                     _install_skill()
 
             # Check at least one known skill dir pattern
+            found = False
             for dirpath, _, filenames in os.walk(tmpdir):
                 if "SKILL.md" in filenames:
+                    found = True
                     # Verify content is non-empty
                     with open(os.path.join(dirpath, "SKILL.md")) as f:
                         content = f.read()
                     self.assertIn("Agent Reach", content)
             # _install_skill may or may not find dirs depending on mock; just ensure no crash
             # The important test is that the function runs without error
+            self.assertTrue(found)
 
     def test_uninstall_skill_removes_dir(self):
         """_uninstall_skill should remove skill directories."""

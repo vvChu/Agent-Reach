@@ -650,6 +650,8 @@ def _install_gh_cli_linux() -> None:
             handle.write(repo_line)
         subprocess.run(["apt-get", "update", "-qq"], capture_output=True, timeout=60)
         subprocess.run(["apt-get", "install", "-y", "-qq", "gh"], capture_output=True, timeout=60)
+    except PermissionError:
+        print("  [!]  gh CLI install needs root privileges. Re-run with sudo or install gh manually.")
     except Exception:
         print(
             "  [!]  gh CLI install failed. You can try: snap install gh, or download from "

@@ -91,7 +91,7 @@ def install_with_fallbacks(
 
 
 def npm_global_package_installed(package_name: str) -> bool:
-    """Return whether an npm global package appears to be installed."""
+    """Return whether an npm global package directory appears to be installed."""
     npm_cmd = shutil.which("npm")
     if not npm_cmd:
         return False
@@ -107,4 +107,4 @@ def npm_global_package_installed(package_name: str) -> bool:
         return False
     if not npm_root:
         return False
-    return os.path.exists(os.path.join(npm_root, package_name, "index.js"))
+    return os.path.isdir(os.path.join(npm_root, package_name))
