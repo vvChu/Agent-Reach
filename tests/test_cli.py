@@ -258,3 +258,24 @@ class TestCheckUpdateRetry:
         assert result == "error"
         assert "网络超时" in captured.out
         assert "已重试 3 次" in captured.out
+
+    def test_cli_module_has_main_guard(self):
+        """Regression: cli.py must contain an if __name__ == '__main__' guard."""
+        import ast
+        import importlib.util
+        import pathlib
+
+        source = pathlib.Path(importlib.util.find_spec("agent_reach.cli").origin).read_text()
+        tree = ast.parse(source)
+        found = any(
+            isinstance(node, ast.If)
+            and isinstance(node.test, ast.Compare)
+            and isinstance(node.test.left, ast.Name)
+            and node.test.left.id == "__name__"
+            and any(
+                isinstance(c, ast.Constant) and c.value == "__main__"
+                for c in node.test.comparators
+            )
+            for node in ast.walk(tree)
+        )
+        assert found, "agent_reach/cli.py is missing 'if __name__ == \"__main__\": main()'"
