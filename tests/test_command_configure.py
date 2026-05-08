@@ -66,7 +66,7 @@ def test_run_configure_twitter_cookies_sets_config_and_checks_access(capsys):
     assert calls[0][1]["env"]["TWITTER_CT0"] == "ct0abc"
 
 
-def test_configure_xhs_cookies_without_docker_writes_local_file(capsys, tmp_path):
+def test_xhs_cookies_no_docker_writes_file(capsys, tmp_path):
     written_modes = []
 
     def fake_chmod(path, mode):

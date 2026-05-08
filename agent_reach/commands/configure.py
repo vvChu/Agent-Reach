@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Mapping
 from typing import Any
 
 from agent_reach.config import Config
@@ -21,7 +22,7 @@ def run_configure(
     browser_configurer=configure_from_browser,
     which=shutil.which,
     run_subprocess=subprocess.run,
-    environ: dict[str, str] | os._Environ[str] | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> None:
     """Set a config value and optionally validate it."""
     env = environ or os.environ
