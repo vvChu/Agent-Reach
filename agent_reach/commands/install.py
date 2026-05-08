@@ -10,6 +10,7 @@ import sys
 import tempfile
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from agent_reach.config import Config
@@ -374,8 +375,7 @@ def install_xiaoyuzhou_deps() -> None:
     if os.path.isfile(script_dst):
         print("  ✅ Xiaoyuzhou transcription script already installed")
     else:
-        script_src = os.path.join(os.path.dirname(__file__), "..", "scripts", "transcribe_xiaoyuzhou.sh")
-        script_src = os.path.abspath(script_src)
+        script_src = Path(__file__).resolve().parent.parent / "scripts" / "transcribe_xiaoyuzhou.sh"
         if os.path.isfile(script_src):
             try:
                 os.makedirs(tools_dir, exist_ok=True)
@@ -550,7 +550,7 @@ def install_wechat_deps() -> None:
         except Exception:
             print(f"  [!]  WeChat packages install failed. Try: pip install {' '.join(packages)}")
         else:
-            if _imports_available(*(module for module in ("camoufox", "miku_ai") if module)):
+            if _imports_available("camoufox", "miku_ai"):
                 print(f"  ✅ WeChat Python packages installed ({', '.join(packages)})")
             else:
                 print(f"  [!]  Some WeChat packages failed to install. Try: pip install {' '.join(packages)}")

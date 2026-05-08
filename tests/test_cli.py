@@ -165,10 +165,16 @@ class TestCLI:
         assert cli._detect_environment() == "server"
 
     def test_version_consistency(self):
-        pyproject = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
-        match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
-        assert match is not None
-        assert match.group(1) == cli.__version__
+        repo_root = Path(__file__).resolve().parents[1]
+        pyproject = (repo_root / "pyproject.toml").read_text(encoding="utf-8")
+        init_py = (repo_root / "agent_reach" / "__init__.py").read_text(encoding="utf-8")
+
+        pyproject_match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
+        init_match = re.search(r'^__version__ = "([^"]+)"$', init_py, re.MULTILINE)
+
+        assert pyproject_match is not None
+        assert init_match is not None
+        assert pyproject_match.group(1) == init_match.group(1) == cli.__version__
 
 
 class TestCheckUpdateRetry:
