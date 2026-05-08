@@ -30,7 +30,12 @@ DoctorResults = dict[str, dict[str, Any]]
 
 @dataclass(frozen=True)
 class InstallHooks:
-    """Injectable hooks for install command side effects."""
+    """Injectable hooks for install command side effects.
+
+    This keeps `run_install` testable by letting callers inject file-system,
+    subprocess, doctor, and browser-cookie side effects while preserving the
+    user-facing CLI flow.
+    """
 
     detect_environment: Callable[[], str]
     install_system_deps: Callable[[], None]

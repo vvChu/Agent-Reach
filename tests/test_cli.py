@@ -172,8 +172,8 @@ class TestCLI:
         pyproject_match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
         init_match = re.search(r'^__version__ = "([^"]+)"$', init_py, re.MULTILINE)
 
-        assert pyproject_match is not None
-        assert init_match is not None
+        assert pyproject_match is not None, "Could not find version in pyproject.toml"
+        assert init_match is not None, "Could not find __version__ in agent_reach/__init__.py"
         assert pyproject_match.group(1) == init_match.group(1) == cli.__version__
 
 
