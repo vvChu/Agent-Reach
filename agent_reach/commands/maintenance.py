@@ -25,6 +25,11 @@ DNS_ERROR_MARKERS = (
 )
 
 
+def _is_dns_error_message(message: str) -> bool:
+    """Return True when a connection error message indicates DNS resolution failure."""
+    return any(marker in message for marker in DNS_ERROR_MARKERS)
+
+
 def _load_rich_printer() -> Callable[..., None]:
     try:
         from rich import print as rich_print
@@ -258,7 +263,7 @@ def classify_update_error(exc: Exception) -> str:
         return "timeout"
     if isinstance(exc, requests.exceptions.ConnectionError):
         message = str(exc).lower()
-        if any(marker in message for marker in DNS_ERROR_MARKERS):
+        if _is_dns_error_message(message):
             return "dns"
         return "connection"
     if isinstance(exc, requests.exceptions.HTTPError):

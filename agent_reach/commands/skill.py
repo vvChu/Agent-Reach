@@ -75,11 +75,7 @@ def _copy_skill_dir(
         for ref_file in refs_pkg.iterdir():
             name = ref_file.name
             if name.endswith(".md"):
-                content = (
-                    ref_file.read_text(encoding="utf-8")
-                    if hasattr(ref_file, "read_text")
-                    else ref_file.read_text()
-                )
+                content = ref_file.read_text(encoding="utf-8")
                 with open(os.path.join(refs_target, name), "w", encoding="utf-8") as handle:
                     handle.write(content)
 

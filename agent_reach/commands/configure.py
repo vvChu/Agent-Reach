@@ -182,9 +182,7 @@ def configure_xhs_cookies(
             chunk = part.strip()
             if "=" not in chunk:
                 continue
-            name, cookie_value = chunk.split("=", 1)
-            name = name.strip()
-            cookie_value = cookie_value.strip()
+            name, cookie_value = (piece.strip() for piece in chunk.split("=", 1))
             if name:
                 cookies.append(
                     {
