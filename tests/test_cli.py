@@ -165,9 +165,7 @@ class TestCLI:
         assert cli._detect_environment() == "server"
 
     def test_version_consistency(self):
-        pyproject = Path("/home/runner/work/Agent-Reach/Agent-Reach/pyproject.toml").read_text(
-            encoding="utf-8"
-        )
+        pyproject = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
         match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
         assert match is not None
         assert match.group(1) == cli.__version__

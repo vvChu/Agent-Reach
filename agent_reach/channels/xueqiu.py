@@ -86,18 +86,15 @@ def _load_cookies_from_browser() -> bool:
         try:
             import rookiepy
             cookies = rookiepy.chrome([".xueqiu.com"])
-            if not any(isinstance(cookie, dict) and cookie.get("name") == "xq_a_token" for cookie in cookies):
+            if not any(
+                isinstance(cookie, dict) and cookie.get("name") == "xq_a_token"
+                for cookie in cookies
+            ):
                 return False
             for cookie in cookies:
-                if not isinstance(cookie, dict):
-                    continue
-                name = cookie.get("name")
-                value = cookie.get("value")
-                if isinstance(name, str) and isinstance(value, str):
-                    domain = cookie.get("domain", ".xueqiu.com")
-                    if not isinstance(domain, str):
-                        domain = ".xueqiu.com"
-                    _cookie_jar.set_cookie(_make_cookie(name, value, domain=domain))
+                converted = _cookie_from_mapping(cookie)
+                if converted is not None:
+                    _cookie_jar.set_cookie(converted)
             return True
         except ImportError:
             import browser_cookie3
@@ -110,6 +107,19 @@ def _load_cookies_from_browser() -> bool:
             return True
     except Exception:
         return False
+
+
+def _cookie_from_mapping(cookie: object) -> http.cookiejar.Cookie | None:
+    if not isinstance(cookie, dict):
+        return None
+    name = cookie.get("name")
+    value = cookie.get("value")
+    if not isinstance(name, str) or not isinstance(value, str):
+        return None
+    domain = cookie.get("domain", ".xueqiu.com")
+    if not isinstance(domain, str):
+        domain = ".xueqiu.com"
+    return _make_cookie(name, value, domain=domain)
 
 
 def _ensure_cookies() -> None:
