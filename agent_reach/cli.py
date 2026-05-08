@@ -285,3 +285,7 @@ def _cmd_check_update():
 
 def _cmd_watch():
     return run_watch(__version__, check_all_fn=_check_all, getter=_github_get_with_retry)
+
+
+if __name__ == "__main__":
+    main()
