@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from agent_reach.cli import _install_skill, _uninstall_skill
+from agent_reach.commands.skill import install_skill, uninstall_skill
 
 
 class TestSkillCommand(unittest.TestCase):
@@ -29,15 +29,12 @@ class TestSkillCommand(unittest.TestCase):
             skill_dir = os.path.join(tmpdir, "skills")
             os.makedirs(skill_dir)
 
-            with patch(
-                "agent_reach.cli.os.path.expanduser",
-                side_effect=lambda p: p.replace("~", tmpdir),
-            ), patch.dict(os.environ, {}, clear=False):
+            with patch.dict(os.environ, {}, clear=False):
                 # Remove OPENCLAW_HOME to avoid interference
                 env = os.environ.copy()
                 env.pop("OPENCLAW_HOME", None)
                 with patch.dict(os.environ, env, clear=True):
-                    _install_skill()
+                    install_skill(expanduser=lambda p: p.replace("~", tmpdir), environ=env)
 
             # Check at least one known skill dir pattern
             found = False
@@ -63,14 +60,11 @@ class TestSkillCommand(unittest.TestCase):
 
             self.assertTrue(os.path.exists(skill_path))
 
-            with patch(
-                "agent_reach.cli.os.path.expanduser",
-                side_effect=lambda p: p.replace("~", tmpdir),
-            ), patch.dict(os.environ, {}, clear=False):
+            with patch.dict(os.environ, {}, clear=False):
                 env = os.environ.copy()
                 env.pop("OPENCLAW_HOME", None)
                 with patch.dict(os.environ, env, clear=True):
-                    _uninstall_skill()
+                    uninstall_skill(expanduser=lambda p: p.replace("~", tmpdir), environ=env)
 
             self.assertFalse(os.path.exists(skill_path))
 
@@ -81,14 +75,11 @@ class TestSkillCommand(unittest.TestCase):
             skill_parent = os.path.join(tmpdir, ".openclaw", "skills")
             os.makedirs(skill_parent)
 
-            with patch(
-                "agent_reach.cli.os.path.expanduser",
-                side_effect=lambda p: p.replace("~", tmpdir),
-            ), patch.dict(os.environ, {}, clear=False):
+            with patch.dict(os.environ, {}, clear=False):
                 env = os.environ.copy()
                 env.pop("OPENCLAW_HOME", None)
                 with patch.dict(os.environ, env, clear=True):
-                    _install_skill()
+                    install_skill(expanduser=lambda p: p.replace("~", tmpdir), environ=env)
 
             target = os.path.join(skill_parent, "agent-reach", "SKILL.md")
             self.assertTrue(os.path.exists(target))
@@ -102,15 +93,11 @@ class TestSkillCommand(unittest.TestCase):
             skill_parent = os.path.join(tmpdir, ".openclaw", "skills")
             os.makedirs(skill_parent)
 
-            with patch(
-                "agent_reach.cli.os.path.expanduser",
-                side_effect=lambda p: p.replace("~", tmpdir),
-            ):
-                env = os.environ.copy()
-                env.pop("OPENCLAW_HOME", None)
-                env["LANG"] = "en_US.UTF-8"
-                with patch.dict(os.environ, env, clear=True):
-                    _install_skill()
+            env = os.environ.copy()
+            env.pop("OPENCLAW_HOME", None)
+            env["LANG"] = "en_US.UTF-8"
+            with patch.dict(os.environ, env, clear=True):
+                install_skill(expanduser=lambda p: p.replace("~", tmpdir), environ=env)
 
             target = os.path.join(skill_parent, "agent-reach", "SKILL.md")
             self.assertTrue(os.path.exists(target))
