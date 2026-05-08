@@ -8,12 +8,18 @@ Usage:
     agent-reach configure --from-browser chrome
 """
 
-import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple, TypedDict
+
+
+class PlatformSpec(TypedDict):
+    name: str
+    domains: list[str]
+    cookies: list[str] | None
+    config_key: str
 
 
 # Platform cookie specs: (platform_name, domain_pattern, needed_cookies)
-PLATFORM_SPECS = [
+PLATFORM_SPECS: list[PlatformSpec] = [
     {
         "name": "Twitter/X",
         "domains": [".x.com", ".twitter.com"],

@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -27,4 +30,53 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -q
+          pytest tests/ -v
+
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package and lint deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints.txt -e .[dev]
+
+      - name: Run targeted Ruff checks
+        run: |
+          ruff check \
+            agent_reach/cli.py \
+            agent_reach/commands \
+            agent_reach/dependencies.py \
+            agent_reach/doctor.py \
+            agent_reach/channels/xueqiu.py \
+            agent_reach/cookie_extract.py \
+            tests/test_cli.py \
+            tests/test_config.py \
+            tests/test_skill_command.py
+
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package and type-check deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints.txt -e .[dev]
+
+      - name: Run targeted mypy checks
+        run: |
+          mypy agent_reach/cli.py agent_reach/commands agent_reach/dependencies.py

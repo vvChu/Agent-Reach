@@ -28,6 +28,27 @@ _opener = urllib.request.build_opener(
 _cookies_initialized = False
 
 
+def _make_cookie(name: str, value: str, *, domain: str = ".xueqiu.com") -> http.cookiejar.Cookie:
+    return http.cookiejar.Cookie(
+        version=0,
+        name=name,
+        value=value,
+        port=None,
+        port_specified=False,
+        domain=domain,
+        domain_specified=True,
+        domain_initial_dot=domain.startswith("."),
+        path="/",
+        path_specified=True,
+        secure=True,
+        expires=None,
+        discard=True,
+        comment=None,
+        comment_url=None,
+        rest={},
+    )
+
+
 def _inject_cookie_string(cookie_str: str) -> None:
     """Parse a 'name=value; name2=value2' string and inject into the cookie jar."""
     for pair in cookie_str.split(";"):
@@ -35,24 +56,7 @@ def _inject_cookie_string(cookie_str: str) -> None:
         if "=" not in pair:
             continue
         name, _, value = pair.partition("=")
-        cookie = http.cookiejar.Cookie(
-            version=0,
-            name=name.strip(),
-            value=value.strip(),
-            port=None,
-            port_specified=False,
-            domain=".xueqiu.com",
-            domain_specified=True,
-            domain_initial_dot=True,
-            path="/",
-            path_specified=True,
-            secure=True,
-            expires=None,
-            discard=True,
-            comment=None,
-            comment_url=None,
-            rest={},
-        )
+        cookie = _make_cookie(name.strip(), value.strip())
         _cookie_jar.set_cookie(cookie)
 
 
@@ -82,13 +86,19 @@ def _load_cookies_from_browser() -> bool:
         try:
             import rookiepy
             cookies = rookiepy.chrome([".xueqiu.com"])
-            if not any(c.get("name") == "xq_a_token" for c in cookies):
+            if not any(
+                _is_valid_cookie_mapping(cookie) and cookie["name"] == "xq_a_token"
+                for cookie in cookies
+            ):
                 return False
-            for c in cookies:
-                _cookie_jar.set(c["name"], c["value"], domain=c.get("domain", ".xueqiu.com"))
+            for cookie in cookies:
+                converted = _cookie_from_mapping(cookie)
+                if converted is not None:
+                    _cookie_jar.set_cookie(converted)
             return True
         except ImportError:
             import browser_cookie3
+
             cookies = list(browser_cookie3.chrome(domain_name=".xueqiu.com"))
             if not any(c.name == "xq_a_token" for c in cookies):
                 return False
@@ -97,6 +107,23 @@ def _load_cookies_from_browser() -> bool:
             return True
     except Exception:
         return False
+
+
+def _cookie_from_mapping(cookie: object) -> http.cookiejar.Cookie | None:
+    if not _is_valid_cookie_mapping(cookie):
+        return None
+    domain = cookie.get("domain", ".xueqiu.com")
+    if not isinstance(domain, str):
+        domain = ".xueqiu.com"
+    return _make_cookie(cookie["name"], cookie["value"], domain=domain)
+
+
+def _is_valid_cookie_mapping(cookie: object) -> bool:
+    return (
+        isinstance(cookie, dict)
+        and isinstance(cookie.get("name"), str)
+        and isinstance(cookie.get("value"), str)
+    )
 
 
 def _ensure_cookies() -> None:
