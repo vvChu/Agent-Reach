@@ -25,6 +25,19 @@ pip install -e ".[dev]"
 pre-commit install
 ```
 
+## CLI Command Layout
+
+The CLI entrypoint in `agent_reach/cli.py` is intentionally thin. It should mainly handle console setup, parser creation, and dispatch.
+
+- `agent_reach/commands/parser.py` builds the argparse tree
+- `agent_reach/commands/install.py` owns install flow + dependency helpers
+- `agent_reach/commands/configure.py` owns configure/cookie import paths
+- `agent_reach/commands/maintenance.py` owns doctor/setup/uninstall/update/watch flows
+- `agent_reach/commands/skill.py` owns skill installation/removal
+- `agent_reach/commands/formatting.py` owns output-formatting helpers
+
+When refactoring CLI behavior, prefer adding isolated tests for the command module itself and keep `cli.py` compatibility wrappers minimal.
+
 ## Code Style
 
 We use the following tools to maintain code quality:
