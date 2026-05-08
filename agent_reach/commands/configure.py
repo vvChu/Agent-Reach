@@ -15,6 +15,10 @@ from agent_reach.config import Config
 from agent_reach.cookie_extract import configure_from_browser
 
 
+def _is_cookie_object(value: object) -> bool:
+    return isinstance(value, dict) and "name" in value and "value" in value
+
+
 def run_configure(
     args: argparse.Namespace,
     *,
@@ -159,7 +163,7 @@ def configure_xhs_cookies(
             parsed = json.loads(raw_value)
             if isinstance(parsed, list) and parsed:
                 first = parsed[0]
-                if isinstance(first, dict) and "name" in first and "value" in first:
+                if _is_cookie_object(first):
                     cookies_json = json.dumps(parsed)
                     print(f"  Parsed {len(parsed)} cookies from JSON format")
                 else:

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 
 from agent_reach import __version__
 from agent_reach.commands import dispatch_command
@@ -276,8 +277,6 @@ def _classify_github_response_error(resp):
 
 def _github_get_with_retry(url, timeout=10, retries=3, sleeper=None):
     if sleeper is None:
-        import time
-
         sleeper = time.sleep
     return _github_get_with_retry_impl(url, timeout=timeout, retries=retries, sleeper=sleeper)
 

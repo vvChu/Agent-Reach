@@ -67,10 +67,10 @@ def test_run_configure_twitter_cookies_sets_config_and_checks_access(capsys):
 
 
 def test_xhs_cookies_no_docker_writes_file(capsys, tmp_path):
-    written_modes = []
+    written_permissions = []
 
-    def fake_chmod(path, mode):
-        written_modes.append((path, mode))
+    def fake_chmod(path, file_mode):
+        written_permissions.append((path, file_mode))
 
     configure.configure_xhs_cookies(
         "a=1; b=2",
@@ -83,4 +83,4 @@ def test_xhs_cookies_no_docker_writes_file(capsys, tmp_path):
     captured = capsys.readouterr()
     assert cookie_path.exists()
     assert "Cookies saved to" in captured.out
-    assert written_modes == [(str(cookie_path), 0o600)]
+    assert written_permissions == [(str(cookie_path), 0o600)]

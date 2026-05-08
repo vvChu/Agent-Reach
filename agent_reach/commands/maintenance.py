@@ -13,6 +13,15 @@ from typing import Any
 from agent_reach.config import Config
 from agent_reach.doctor import check_all, format_report
 
+DNS_ERROR_MARKERS = (
+    "name or service not known",
+    "temporary failure in name resolution",
+    "nodename nor servname",
+    "getaddrinfo failed",
+    "name resolution",
+    "dns",
+)
+
 
 def _load_rich_printer() -> Callable[..., None]:
     try:
@@ -247,15 +256,7 @@ def classify_update_error(exc: Exception) -> str:
         return "timeout"
     if isinstance(exc, requests.exceptions.ConnectionError):
         message = str(exc).lower()
-        dns_markers = [
-            "name or service not known",
-            "temporary failure in name resolution",
-            "nodename nor servname",
-            "getaddrinfo failed",
-            "name resolution",
-            "dns",
-        ]
-        if any(marker in message for marker in dns_markers):
+        if any(marker in message for marker in DNS_ERROR_MARKERS):
             return "dns"
         return "connection"
     if isinstance(exc, requests.exceptions.HTTPError):
